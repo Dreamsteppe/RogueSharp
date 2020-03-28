@@ -7,6 +7,10 @@ namespace WhateverIWant.Core
     {
         public static RLColor Player = Swatch.DbLight;
 
+        public static RLColor TextHeading = RLColor.White;
+        public static RLColor Text = Swatch.DbLight;
+        public static RLColor Gold = Swatch.DbSun;
+
         public static RLColor FloorBackground = RLColor.Black;
         public static RLColor Floor = Swatch.AlternateDarkest;
         public static RLColor FloorBackgroundFov = Swatch.DbDark;
@@ -17,7 +21,7 @@ namespace WhateverIWant.Core
         public static RLColor WallBackgroundFov = Swatch.SecondaryDarker;
         public static RLColor WallFov = Swatch.SecondaryLighter;
 
-        public static RLColor TextHeading = Swatch.DbLight;
+        public static RLColor KoboldColor = Swatch.DbBrightWood;
 
     }
 }
