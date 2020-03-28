@@ -1,6 +1,7 @@
 ﻿using RLNET;
 //this prevents us from getting an error when we use List<Rectangle>
 using System.Collections.Generic;
+using System.Linq;
 using RogueSharp;
 using WhateverIWant.Core;
 using WhateverIWant.Monsters;
@@ -22,18 +23,26 @@ namespace WhateverIWant.Core
 
         // The Draw method will be called each time the map is updated
         // It will render all of the symbols/colors for each cell to the map sub console
-        public void Draw(RLConsole mapConsole)
+        public void Draw(RLConsole mapConsole, RLConsole statConsole)
         {
-            mapConsole.Clear();
             foreach (Cell cell in GetAllCells())
             {
                 SetConsoleSymbolForCell(mapConsole, cell);
             }
 
-            //iterate through each monster on the map and draw it after drawing the Cells
+            //Keep an index so we know which position to draw monster stats at
+            int i = 0;
+            //Iterate through each monster on the map and draw it after drawing the cells
             foreach(Monster monster in _monsters)
             {
                 monster.Draw(mapConsole, this);
+                //When the monster is in the FOV, also draw their stats
+                if (IsInFov(monster.X, monster.Y))
+                {
+                    //pass in the index to DrawStats and increment it afterwards
+                    monster.DrawStats( statConsole, i);
+                    i++;
+                }
             }
         }
 
@@ -117,6 +126,7 @@ namespace WhateverIWant.Core
             Game.Player = player;
             SetIsWalkable(player.X, player.Y, false);
             UpdatePlayerFieldOfView();
+            Game.SchedulingSystem.Add(player);
         }
 
         public void AddMonster(Monster monster)
@@ -124,6 +134,20 @@ namespace WhateverIWant.Core
             _monsters.Add(monster);
             //After adding the monster to the map, make sure the cell is not walkabnle
             SetIsWalkable(monster.X, monster.Y, false);
+            Game.SchedulingSystem.Add(monster);
+        }
+
+        public void RemoveMonster(Monster monster)
+        {
+            _monsters.Remove(monster);
+            //After removing the monster from the map, make sure the cell is walkable once again
+            SetIsWalkable(monster.X, monster.Y, true);
+            Game.SchedulingSystem.Remove(monster);
+        }
+
+        public Monster GetMonsterAt(int x, int y)
+        {
+            return _monsters.FirstOrDefault(m => m.X == x && m.Y == y);
         }
 
         // A helper method for setting the IsWalkable property on a Cell
