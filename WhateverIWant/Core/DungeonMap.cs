@@ -12,13 +12,19 @@ namespace WhateverIWant.Core
     public class DungeonMap : Map
     {
         public List<Rectangle> Rooms;
+        public List<Door> Doors { get; set; }
+        public Stairs StairsUp { get; set; }
+        public Stairs StairsDown { get; set; }
         private readonly List<Monster> _monsters;
 
         public DungeonMap()
         {
+            Game.SchedulingSystem.Clear();
+
             //initialize the list of rooms when we create a new DungeonMap
             _monsters = new List<Monster>();
             Rooms = new List<Rectangle>();
+            Doors = new List<Door>();
         }
 
         // The Draw method will be called each time the map is updated
@@ -29,6 +35,14 @@ namespace WhateverIWant.Core
             {
                 SetConsoleSymbolForCell(mapConsole, cell);
             }
+
+            foreach (Door door in Doors)
+            {
+                door.Draw(mapConsole, this);
+            }
+
+            StairsUp.Draw(mapConsole, this);
+            StairsDown.Draw(mapConsole, this);
 
             //Keep an index so we know which position to draw monster stats at
             int i = 0;
@@ -105,6 +119,7 @@ namespace WhateverIWant.Core
             {
                 // The cell the actor was previously on is now walkable
                 SetIsWalkable(actor.X, actor.Y, true);
+                OpenDoor(actor, x, y);
                 // Update the actor's position
                 actor.X = x;
                 actor.Y = y;
@@ -150,6 +165,12 @@ namespace WhateverIWant.Core
             return _monsters.FirstOrDefault(m => m.X == x && m.Y == y);
         }
 
+        public bool CanMoveDownToNextLevel()
+        {
+            Player player = Game.Player;
+            return StairsDown.X == player.X && StairsDown.Y == player.Y;
+        }
+
         // A helper method for setting the IsWalkable property on a Cell
         public void SetIsWalkable(int x, int y, bool isWalkable)
         {
@@ -193,6 +214,25 @@ namespace WhateverIWant.Core
             return false;
         }
 
+        //Return the door at the x, y position or null if one is not found.
+        public Door GetDoor(int x, int y)
+        {
+            return Doors.SingleOrDefault(d => d.X == x && d.Y == y);
+        }
 
+        //The actor opens the door located at the x,y position
+        private void OpenDoor(Actor actor, int x, int y)
+        {
+            Door door = GetDoor(x, y);
+            if (door != null && !door.IsOpen)
+            {
+                door.IsOpen = true;
+                var cell = GetCell(x, y);
+                //Once the door is opened, it should be marked as transparent and no longer block FoV
+                SetCellProperties(x, y, true, cell.IsWalkable, cell.IsExplored);
+
+                Game.MessageLog.Add($"{actor.Name} opened a door.");
+            }
+        }
     }
 }
